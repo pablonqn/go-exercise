@@ -51,15 +51,16 @@ func IsValidPair(value string) bool {
 
 // ParsePairs parses a comma-separated string of pairs
 func ParsePairs(pairsStr string) ([]Pair, error) {
+	// If empty, return all valid pairs
 	if pairsStr == "" {
-		// Return all valid pairs if none specified
 		return []Pair{
-			Pair{value: BTCUSD},
-			Pair{value: BTCCHF},
-			Pair{value: BTCEUR},
+			{value: BTCUSD},
+			{value: BTCCHF},
+			{value: BTCEUR},
 		}, nil
 	}
 
+	// Parse and validate each pair
 	pairs := strings.Split(pairsStr, ",")
 	result := make([]Pair, 0, len(pairs))
 	seen := make(map[string]bool)
@@ -69,7 +70,7 @@ func ParsePairs(pairsStr string) ([]Pair, error) {
 		if err != nil {
 			return nil, err
 		}
-		// Avoid duplicates
+		// Skip duplicates
 		if !seen[pair.Value()] {
 			result = append(result, pair)
 			seen[pair.Value()] = true

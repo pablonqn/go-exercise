@@ -59,12 +59,15 @@ func (s *LTPService) GetLTPs(pairsStr string) ([]domain.LTP, error) {
 		}
 	}
 
-	// Convert map to sorted slice
-	result := make([]domain.LTP, 0, len(ltpMap))
-	for _, ltp := range ltpMap {
-		result = append(result, ltp)
+	// Build result slice maintaining original order
+	result := make([]domain.LTP, 0, len(pairs))
+	for _, pair := range pairs {
+		if ltp, ok := ltpMap[pair.Value()]; ok {
+			result = append(result, ltp)
+		}
 	}
 
+	// Sort by pair name for consistent output
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].Pair.Value() < result[j].Pair.Value()
 	})

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"go-exercise/internal/domain"
@@ -54,45 +56,29 @@ func pairToKrakenSymbol(pair domain.Pair) string {
 	return pair.Value()
 }
 
-// findKrakenSymbolInResult searches for a symbol in the result map, trying different variants
-// Kraken may return symbols with different formats (e.g., "XXBTZUSD" instead of "XBTUSD")
+// findKrakenSymbolInResult searches for a symbol in the result map
+// Kraken sometimes returns symbols with different formats (e.g., "XXBTZUSD" instead of "XBTUSD")
 func findKrakenSymbolInResult(result map[string]KrakenTickerData, requestedSymbol string) (KrakenTickerData, string, bool) {
 	// Try exact match first
 	if tickerData, ok := result[requestedSymbol]; ok {
 		return tickerData, requestedSymbol, true
 	}
 
-	// Build variants based on common Kraken symbol patterns
-	variants := []string{}
-
-	// If symbol starts with XBT, try XXBT variants (common pattern: XBTUSD -> XXBTZUSD)
+	// Common variants for XBT symbols
 	if len(requestedSymbol) >= 3 && requestedSymbol[:3] == "XBT" {
-		suffix := requestedSymbol[3:] // Everything after XBT (e.g., "USD", "EUR", "CHF")
-		variants = append(variants,
-			"XXBTZ"+suffix,      // XBTUSD -> XXBTZUSD (most common variant)
-			"XXBT"+suffix,       // XBTUSD -> XXBTUSD
-			"X"+requestedSymbol, // XBTUSD -> XXBTUSD
-		)
-	} else if len(requestedSymbol) > 0 && requestedSymbol[0] == 'X' {
-		// If starts with X, try XX variants
-		variants = append(variants,
-			"X"+requestedSymbol,      // XBTUSD -> XXBTUSD
-			"XX"+requestedSymbol[1:], // XBTUSD -> XXBTUSD
-		)
-	} else {
-		// Generic variants
-		variants = append(variants,
-			"X"+requestedSymbol,
-		)
-	}
-
-	for _, variant := range variants {
-		if tickerData, ok := result[variant]; ok {
-			return tickerData, variant, true
+		suffix := requestedSymbol[3:]
+		variants := []string{
+			"XXBTZ" + suffix, // Most common: XBTUSD -> XXBTZUSD
+			"XXBT" + suffix,
+		}
+		for _, variant := range variants {
+			if tickerData, ok := result[variant]; ok {
+				return tickerData, variant, true
+			}
 		}
 	}
 
-	// If only one result and we requested one pair, use it
+	// If only one result exists, use it
 	if len(result) == 1 {
 		for symbol, tickerData := range result {
 			return tickerData, symbol, true
@@ -120,17 +106,15 @@ func (k *KrakenClient) GetTickers(pairs []domain.Pair) ([]domain.LTP, error) {
 		return nil, fmt.Errorf("no pairs provided")
 	}
 
-	// Build comma-separated list of symbols
+	// Convert pairs to Kraken symbols
 	symbols := make([]string, len(pairs))
 	for i, pair := range pairs {
 		symbols[i] = pairToKrakenSymbol(pair)
 	}
 
-	url := fmt.Sprintf("%s/Ticker?pair=%s", k.baseURL, symbols[0])
-	if len(symbols) > 1 {
-		// Kraken accepts comma-separated pairs
-		url = fmt.Sprintf("%s/Ticker?pair=%s", k.baseURL, joinStrings(symbols, ","))
-	}
+	// Build URL with comma-separated symbols
+	pairParam := strings.Join(symbols, ",")
+	url := fmt.Sprintf("%s/Ticker?pair=%s", k.baseURL, pairParam)
 
 	resp, err := k.httpClient.Get(url)
 	if err != nil {
@@ -169,8 +153,8 @@ func (k *KrakenClient) GetTickers(pairs []domain.Pair) ([]domain.LTP, error) {
 			return nil, fmt.Errorf("invalid ticker data for symbol %s (found as %s)", pair.Value(), foundSymbol)
 		}
 
-		var amount float64
-		if _, err := fmt.Sscanf(tickerData.C[0], "%f", &amount); err != nil {
+		amount, err := strconv.ParseFloat(tickerData.C[0], 64)
+		if err != nil {
 			return nil, fmt.Errorf("failed to parse amount for %s (found as %s): %w", pair.Value(), foundSymbol, err)
 		}
 
@@ -181,19 +165,4 @@ func (k *KrakenClient) GetTickers(pairs []domain.Pair) ([]domain.LTP, error) {
 	}
 
 	return result, nil
-}
-
-// joinStrings joins a slice of strings with a separator
-func joinStrings(strs []string, sep string) string {
-	if len(strs) == 0 {
-		return ""
-	}
-	if len(strs) == 1 {
-		return strs[0]
-	}
-	result := strs[0]
-	for _, s := range strs[1:] {
-		result += sep + s
-	}
-	return result
 }

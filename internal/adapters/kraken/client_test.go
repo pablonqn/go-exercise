@@ -368,23 +368,3 @@ func TestKrakenClient_GetTickers_InvalidAmount(t *testing.T) {
 	assert.True(t, gock.IsDone())
 }
 
-func TestJoinStrings(t *testing.T) {
-	tests := []struct {
-		name     string
-		strs     []string
-		sep      string
-		expected string
-	}{
-		{"empty", []string{}, ",", ""},
-		{"single", []string{"a"}, ",", "a"},
-		{"multiple", []string{"a", "b", "c"}, ",", "a,b,c"},
-		{"with different sep", []string{"a", "b"}, "-", "a-b"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := joinStrings(tt.strs, tt.sep)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
