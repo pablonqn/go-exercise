@@ -1,4 +1,4 @@
-# Golang Developer Assigment
+# Golang Developer Assignment
 
 Develop in Go language a service that will provide an API for retrieval of the Last Traded Price of Bitcoin for the following currency pairs:
 
@@ -6,9 +6,8 @@ Develop in Go language a service that will provide an API for retrieval of the L
 2. BTC/CHF
 3. BTC/EUR
 
-
 The request path is:
-/api/v1/ltp
+`/api/v1/ltp`
 
 The response shall constitute JSON of the following structure:
 ```json
@@ -28,10 +27,9 @@ The response shall constitute JSON of the following structure:
     }
   ]
 }
-
 ```
 
-# Requirements:
+## Requirements:
 
 1. The incoming request can done for as for a single pair as well for a list of them
 2. You shall provide time accuracy of the data up to the last minute.
@@ -40,7 +38,8 @@ The response shall constitute JSON of the following structure:
 5. Integration tests
 6. Dockerized application
 
-# Docs
+## Docs
 The public Kraken API might be used to retrieve the above LTP information
 [API Documentation](https://docs.kraken.com/rest/#tag/Spot-Market-Data/operation/getTickerInformation)
-(The values of the last traded price is called “last trade closed”)
+(The values of the last traded price is called "last trade closed")
+
