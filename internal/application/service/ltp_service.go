@@ -29,40 +29,42 @@ func NewLTPService(repository ports.Repository, external ports.External) *LTPSer
 // GetLTPs retrieves LTPs for the requested pairs
 // If pairs is empty, returns all valid pairs
 func (s *LTPService) GetLTPs(pairsStr string) ([]domain.LTP, error) {
-	// Parse pairs from string
 	pairs, err := domain.ParsePairs(pairsStr)
 	if err != nil {
 		return nil, fmt.Errorf("invalid pairs: %w", err)
 	}
 
-	result := make([]domain.LTP, 0, len(pairs))
-	pairsToFetch := make([]domain.Pair, 0)
+	// Use map to track which pairs we need to fetch
+	ltpMap := make(map[string]domain.LTP)
+	var pairsToFetch []domain.Pair
 
-	// Check cache first
 	for _, pair := range pairs {
 		cached, found := s.repository.GetLTP(pair)
 		if found && cached != nil {
-			result = append(result, cached.LTP)
+			ltpMap[pair.Value()] = cached.LTP
 		} else {
 			pairsToFetch = append(pairsToFetch, pair)
 		}
 	}
 
-	// Fetch missing or expired pairs from external API
 	if len(pairsToFetch) > 0 {
 		ltps, err := s.external.GetTickers(pairsToFetch)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch from external service: %w", err)
 		}
 
-		// Cache the fetched LTPs
 		for _, ltp := range ltps {
 			s.repository.SetLTP(ltp.Pair, ltp)
-			result = append(result, ltp)
+			ltpMap[ltp.Pair.Value()] = ltp
 		}
 	}
 
-	// Sort results by pair name for consistent output
+	// Convert map to sorted slice
+	result := make([]domain.LTP, 0, len(ltpMap))
+	for _, ltp := range ltpMap {
+		result = append(result, ltp)
+	}
+
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].Pair.Value() < result[j].Pair.Value()
 	})
