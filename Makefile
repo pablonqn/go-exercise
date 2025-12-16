@@ -30,7 +30,7 @@ build:
 
 # Run the application
 run:
-	go run ./cmd/server
+	go run ./cmd/server || true
 
 # Run all tests
 test:
