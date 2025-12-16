@@ -3,20 +3,16 @@
 [![Go Version](https://img.shields.io/badge/go-1.21+-blue.svg)](https://golang.org)
 [![Go Report Card](https://goreportcard.com/badge/github.com/yourusername/go-exercise)](https://goreportcard.com/report/github.com/yourusername/go-exercise)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/yourusername/go-exercise)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/yourusername/go-exercise)
 
 REST API to retrieve the Last Traded Price of Bitcoin for currency pairs (BTC/USD, BTC/CHF, BTC/EUR).
 
 ## 🚀 Quick Start
 
-[▶️ **Run in Gitpod**](https://gitpod.io/#https://github.com/yourusername/go-exercise) | [▶️ **Run in Codespaces**](https://codespaces.new/yourusername/go-exercise)
-
 ```bash
 # Clone and run
 git clone <repo-url>
 cd go-exercise
-go run ./cmd/server
+make run
 
 # Test the API
 curl http://localhost:8080/api/v1/ltp?pairs=BTC/USD
@@ -33,13 +29,13 @@ Hexagonal Architecture (Ports & Adapters):
 ## Build
 
 ```bash
-go build -o bin/server ./cmd/server
+make build
 ```
 
 ## Run
 
 ```bash
-go run ./cmd/server
+make run
 ```
 
 The server starts at `http://localhost:8080`
@@ -48,25 +44,49 @@ The server starts at `http://localhost:8080`
 
 ### Unit tests
 ```bash
-go test -v ./...
+make test
 ```
 
-### Integration tests
+### Integration tests (Container tests)
 ```bash
-go test -v ./tests/integration/...
+make inttest
 ```
+
+This command will:
+1. Build the Docker image (`bitcoin-ltp-api:test`)
+2. Run integration tests using testcontainers
 
 ## Docker
 
 ### Build
 ```bash
-docker build -t bitcoin-ltp-api:latest .
+make docker-build
 ```
 
 ### Run
 ```bash
-docker run -p 8080:8080 bitcoin-ltp-api:latest
+make docker-run
 ```
+
+## Available Commands
+
+Run `make` or `make help` to see all available commands:
+
+```bash
+make help
+```
+
+Available commands:
+- `make build` - Build the application
+- `make run` - Run the application
+- `make test` - Run all unit tests
+- `make inttest` - Run integration tests (requires Docker, builds image first)
+- `make docker-build` - Build Docker image
+- `make docker-run` - Run Docker container
+- `make swagger` - Generate Swagger documentation
+- `make clean` - Clean build artifacts
+- `make deps` - Install/update dependencies
+- `make install-swag` - Install swag tool for Swagger
 
 ## API Endpoints
 
@@ -108,3 +128,4 @@ go-exercise/
 - Swagger (Documentation)
 - Gock (HTTP mocking for tests)
 - Testify (Testing and mocks)
+- Testcontainers (Container-based integration tests)
